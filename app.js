@@ -10,80 +10,126 @@ const outputPath = path.join(OUTPUT_DIR, "team.html");
 
 const render = require("./lib/htmlRenderer");
 
+//empty array to stock the employee objects
+const employees = []
 
-// Write code to use inquirer to gather information about the development team members,
+//questions object for the inquirer prompt
+const questions = [
+    {
+        type: "input",
+        message: "Employee name:",
+        name: "name"
+    },
+    {
+        type: "list",
+        message: "Please choose employee role:",
+        choices: [
+            "Manager",
+            "Engineer",
+            "Intern"
+        ],
+        name: "role"
+    },
+    {
+        type: "input",
+        message: "Enter employee id (must be a number):",
+        name: "id"
+    },
+    {
+        type: "input",
+        message: "Employee email:",
+        name: "email"
+    }
+]
+
+//Function to start adding employees
 function addEmployee() {
-    inquirer.prompt([
-        {
-            type: "input",
-            message: "What is the employee name?",
-            name: "name"
-        },
-        {
-            type: "list",
-            message: "What is the employee role?",
-            choices: [
-                "Manager",
-                "Engineer",
-                "Intern"
-            ],
-            name: "role"
-        },
-        {
-            type: "input",
-            message: "What is the employee id (must be a number)?",
-            name: "id"
-        },
-        {
-            type: "input",
-            message: "What is the employee email?",
-            name: "email"
-        }
-    ]).then(function(response){
-        console.log("response:", response)
-        let employeeRole = response.role
-        let infoRole = ""
+    inquirer.prompt(questions).then(function(response){
+        //Variable with the employee name
+        let nameEmployee = response.name
+        //Variable with the employee role
+        let roleEmployee = response.role
+        //Variable with the employee id
+        let idEmployee = response.id
+        //Variable with the employee email
+        let emailEmployee = response.email
 
-        if (employeeRole === "Manager") {
-            infoRole = "office phone number"
-        } else if (employeeRole === "Intern") {
-            infoRole = "school name"
+        //Variable to ask for the bonus role question
+        let bonusRole = ""
+
+        //Adapt the bonus role question to each employee types
+        if (roleEmployee === "Manager") {
+            bonusRole = "office phone number"
+        } else if (roleEmployee === "Intern") {
+            bonusRole = "school name"
         } else {
-            infoRole = "Github username"
+            bonusRole = "Github username"
         }
 
+        //Questions for the bonus role and to continue adding employees
         inquirer.prompt([
             {
                 type: "input",
-                message: `Please enter your ${employeeRole} ${infoRole}:`,
-                name: "infoRole",
+                message: `Enter your ${roleEmployee} ${bonusRole}:`,
+                name: "bonusRole",
             },
+            {
+                type: "list",
+                message: "Do you need to add more employee?",
+                choices: [
+                    "yes",
+                    "no"
+                ],
+                name: "moreEmployee"
+            }
         ])
+        .then(function(response){
+            //Variable with the employee bonus role answer
+            let bonusRoleEmployee = response.bonusRole
+            //Variable to stock the answer to adding more employees
+            let moreEmployee = response.moreEmployee
 
+            //function to print the object into the employee array
+            function printEmployee() {
+                if (roleEmployee === "Manager") {
+                    //Manager constructor
+                    let printEmployee = new Manager(nameEmployee, idEmployee, emailEmployee, bonusRoleEmployee)
+                    //Manager constructor pushed to the employees array
+                    employees.push(printEmployee)
+                } else if (roleEmployee === "Intern") {
+                    //Intern constructor
+                    let printEmployee = new Intern(nameEmployee, idEmployee, emailEmployee, bonusRoleEmployee)
+                    //Intern constructor pushed to the employees array
+                    employees.push(printEmployee)
+                } else {
+                    //Engineer constructor
+                    let printEmployee = new Engineer(nameEmployee, idEmployee, emailEmployee, bonusRoleEmployee)
+                    //Engineer constructor pushed to the employees array
+                    employees.push(printEmployee)
+                }
+            }
 
-    })
-    
+            //Function to generate the html page
+            function renderHtml() {
+                fs.writeFile('team.html', render(employees), (err) =>
+                err
+                ? console.error(err)
+                : console.log('Success!')
+            );
+            }
+
+            //If "yes" to add employees: printEmployee() and continue with addEmployee()
+            if (moreEmployee === "yes") {
+                printEmployee()
+                addEmployee()
+            } 
+            //If "no" to add employees: printEmployee() and renderHtml() page
+            else {
+                printEmployee()
+                renderHtml()
+            }
+        })
+    }) 
 }
 
 addEmployee()
-// and to create objects for each team member (using the correct classes as blueprints!)
-
-// After the user has input all employees desired, call the `render` function (required
-// above) and pass in an array containing all employee objects; the `render` function will
-// generate and return a block of HTML including templated divs for each employee!
-
-// After you have your html, you're now ready to create an HTML file using the HTML
-// returned from the `render` function. Now write it to a file named `team.html` in the
-// `output` folder. You can use the variable `outputPath` above target this location.
-// Hint: you may need to check if the `output` folder exists and create it if it
-// does not.
-
-// HINT: each employee type (manager, engineer, or intern) has slightly different
-// information; write your code to ask different questions via inquirer depending on
-// employee type.
-
-// HINT: make sure to build out your classes first! Remember that your Manager, Engineer,
-// and Intern classes should all extend from a class named Employee; see the directions
-// for further information. Be sure to test out each class and verify it generates an
-// object with the correct structure and methods. This structure will be crucial in order
-// for the provided `render` function to work! ```
